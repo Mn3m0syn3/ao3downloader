@@ -2,12 +2,13 @@ import requests
 import traceback
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.ao3 as ao3
 import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 import ao3downloader.update as update
 
 from tqdm import tqdm
+
+from ao3downloader.ao3 import Ao3
 
 def action():
 
@@ -18,9 +19,6 @@ def action():
 
     update_filetypes = shared.get_update_types()
     download_filetypes = shared.get_download_types()
-
-    print(strings.AO3_PROMPT_SUBFOLDERS)
-    subfolders = True if input() == strings.PROMPT_YES else False
 
     print(strings.AO3_PROMPT_IMAGES)
     images = True if input() == strings.PROMPT_YES else False
@@ -65,5 +63,7 @@ def action():
 
     fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
 
+    ao3 = Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, download_filetypes, images, True, None)
+
     for key, value in tqdm(series.items()):
-        ao3.update_series(key, download_filetypes, strings.DOWNLOAD_FOLDER_NAME, logfile, session, subfolders, value, images)
+        ao3.update_series(key, value)

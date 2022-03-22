@@ -2,12 +2,13 @@ import requests
 import traceback
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.ao3 as ao3
 import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 import ao3downloader.update as update
 
 from tqdm import tqdm
+
+from ao3downloader.ao3 import Ao3
 
 def action():
     
@@ -81,7 +82,9 @@ def action():
 
     fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
 
+    ao3 = Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, newtypes, images, False, None)
+
     for url in tqdm(urls):
-        ao3.download(url, newtypes, strings.DOWNLOAD_FOLDER_NAME, logfile, session, False, None, False, images)
+        ao3.download(url)
 
     session.close()

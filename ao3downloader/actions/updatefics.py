@@ -1,15 +1,15 @@
 import itertools
-import os
 import requests
 import traceback
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.ao3 as ao3
 import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 import ao3downloader.update as update
 
 from tqdm import tqdm
+
+from ao3downloader.ao3 import Ao3
 
 
 def action():
@@ -61,7 +61,9 @@ def action():
 
     fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
 
+    ao3 = Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, download_filetypes, images, False, None)
+
     for work in tqdm(works_cleaned):
-        ao3.update(work['link'], download_filetypes, strings.DOWNLOAD_FOLDER_NAME, logfile, session, work['chapters'], images)
+        ao3.update(work['link'], work['chapters'])
 
     session.close()

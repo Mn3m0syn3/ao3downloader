@@ -4,9 +4,10 @@ import traceback
 import requests
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.ao3 as ao3
 import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
+
+from ao3downloader.ao3 import Ao3
 
 
 def action():
@@ -15,12 +16,6 @@ def action():
 
     print(strings.AO3_PROMPT_SERIES)
     series = True if input() == strings.PROMPT_YES else False
-
-    if series:
-        print(strings.AO3_PROMPT_SUBFOLDERS)
-        subfolders = True if input() == strings.PROMPT_YES else False
-    else:
-        subfolders = False
 
     logfile = shared.get_logfile()
     
@@ -67,7 +62,7 @@ def action():
 
     fileio.write_log(logfile, {'starting': link})
     fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
-    
-    ao3.download(link, filetypes, strings.DOWNLOAD_FOLDER_NAME, logfile, session, subfolders, pages, series, images)
 
+    Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, filetypes, images, series, pages).download(link)
+    
     session.close()

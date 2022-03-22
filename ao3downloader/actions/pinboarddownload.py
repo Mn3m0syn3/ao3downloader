@@ -1,13 +1,14 @@
 import requests
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.ao3 as ao3
 import ao3downloader.fileio as fileio
 import ao3downloader.pinboard as pinboard
 import ao3downloader.strings as strings
 
 from datetime import datetime
 from tqdm import tqdm
+
+from ao3downloader.ao3 import Ao3
 
 
 def action():
@@ -63,8 +64,9 @@ def action():
 
     fileio.make_dir(folder)
 
+    ao3 = Ao3(session, logfile, folder, filetypes, images, True, None)
+
     for item in tqdm(bookmarks):
-        link = item['href']
-        ao3.download(link, filetypes, folder, logfile, session, subfolders, None, True, images)
+        ao3.download(item['href'])
     
     session.close()
