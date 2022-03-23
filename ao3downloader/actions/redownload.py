@@ -2,13 +2,14 @@ import requests
 import traceback
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 import ao3downloader.update as update
 
 from tqdm import tqdm
 
 from ao3downloader.ao3 import Ao3
+from ao3downloader.fileio import FileOps
+from ao3downloader.repo import Repository
 
 def action():
     
@@ -44,6 +45,7 @@ def action():
     images = True if input() == strings.PROMPT_YES else False
 
     session = requests.sessions.Session()
+    repo = Repository(session, 1)
     shared.ao3_login(session)
 
     fics = shared.get_files_of_type(folder, oldtypes)
@@ -53,6 +55,7 @@ def action():
     print(strings.REDOWNLOAD_INFO_URLS)
 
     logfile = shared.get_logfile()
+    fileio = FileOps(strings.DOWNLOAD_FOLDER_NAME, logfile, strings.SETTINGS_FILE_NAME)
 
     works = []
     for fic in tqdm(fics):
@@ -60,29 +63,27 @@ def action():
             work = update.process_file(fic['path'], fic['filetype'], False)
             if work: 
                 works.append(work)
-                fileio.write_log(logfile, {'message': strings.MESSAGE_FIC_FILE, 'path': fic['path'], 'link': work['link']})
+                fileio.write_log({'message': strings.MESSAGE_FIC_FILE, 'path': fic['path'], 'link': work['link']})
         except Exception as e:
-            fileio.write_log(logfile, {'message': strings.ERROR_REDOWNLOAD, 'path': fic['path'], 'error': str(e), 'stacktrace': traceback.format_exc()})
+            fileio.write_log({'message': strings.ERROR_REDOWNLOAD, 'path': fic['path'], 'error': str(e), 'stacktrace': traceback.format_exc()})
 
     urls = list(set(map(lambda x: x['link'], works)))
 
     print(strings.REDOWNLOAD_INFO_DONE.format(len(urls)))
 
-    logs = fileio.load_logfile(logfile)
+    logs = fileio.load_logfile()
     if logs:
         print(strings.INFO_EXCLUDING_WORKS)
         titles = shared.get_title_dict(logs)
         unsuccessful = shared.get_unsuccessful_downloads(logs)
         urls = list(filter(lambda x: 
-            not fileio.file_exists(x, titles, newtypes, strings.DOWNLOAD_FOLDER_NAME)
+            not fileio.file_exists(x, titles, newtypes)
             and x not in unsuccessful,
             urls))
 
     print(strings.AO3_INFO_DOWNLOADING)
 
-    fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
-
-    ao3 = Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, newtypes, images, False, None)
+    ao3 = Ao3(repo, fileio, newtypes, images, False, None)
 
     for url in tqdm(urls):
         ao3.download(url)

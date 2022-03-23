@@ -9,14 +9,15 @@ from datetime import datetime
 from tqdm import tqdm
 
 from ao3downloader.ao3 import Ao3
+from ao3downloader.fileio import FileOps
+from ao3downloader.pinboard import Pinboard
+from ao3downloader.repo import Repository
 
 
 def action():
-
-    filetypes = shared.get_download_types()
-
-    print(strings.AO3_PROMPT_SUBFOLDERS)
-    subfolders = True if input() == strings.PROMPT_YES else False
+    fileio = FileOps()
+    repo = Repository(1)
+    filetypes = shared.get_download_types(fileio)
 
     print(strings.PINBOARD_PROMPT_DATE)
     getdate = True if input() == strings.PROMPT_YES else False
@@ -36,35 +37,27 @@ def action():
 
     api_token = fileio.setting(
         strings.PINBOARD_PROMPT_API_TOKEN, 
-        strings.SETTINGS_FILE_NAME, 
         strings.SETTING_API_TOKEN)
 
-    session = requests.sessions.Session()
-
-    shared.ao3_login(session)
+    shared.ao3_login(repo)
     
     print(strings.PINBOARD_INFO_GETTING_BOOKMARKS)
-    bookmarks = pinboard.get_bookmarks(api_token, date, exclude_toread)
+    bookmarks = Pinboard(repo, api_token).get_bookmarks(date, exclude_toread)
     print(strings.PINBOARD_INFO_NUM_RETURNED.format(len(bookmarks)))
 
-    folder = strings.DOWNLOAD_FOLDER_NAME
-    logfile = shared.get_logfile()
-
-    logs = fileio.load_logfile(logfile)
+    logs = fileio.load_logfile()
     if logs:
         print(strings.INFO_EXCLUDING_WORKS)
         titles = shared.get_title_dict(logs)
         unsuccessful = shared.get_unsuccessful_downloads(logs)
         bookmarks = list(filter(lambda x: 
-            not fileio.file_exists(x['href'], titles, filetypes, folder) 
+            not fileio.file_exists(x['href'], titles, filetypes) 
             and x['href'] not in unsuccessful, 
             bookmarks))
 
     print(strings.AO3_INFO_DOWNLOADING)
 
-    fileio.make_dir(folder)
-
-    ao3 = Ao3(session, logfile, folder, filetypes, images, True, None)
+    ao3 = Ao3(repo, fileio, filetypes, images, True, None)
 
     for item in tqdm(bookmarks):
         ao3.download(item['href'])

@@ -2,195 +2,170 @@
 
 import re
 
+from bs4 import BeautifulSoup
+
+import ao3downloader.exceptions as exceptions
 import ao3downloader.strings as strings
-
-from ao3downloader.exceptions import DownloadException
-from ao3downloader.exceptions import ProceedException
+import ao3downloader.text as text
 
 
-def get_token(soup):
-    """Get authentication token for logging in to ao3."""
+class Soup:
 
-    token = (soup.find('form', class_='new_user')
-                 .find('input', attrs={'name': 'authenticity_token'})
-                 .get('value'))
-    return token
+    def get_token(self, soup: BeautifulSoup) -> str:
+        """Get authentication token for logging in to ao3."""
 
-
-def get_image_links(soup):
-    links = []
-    work = soup.find('div', id='workskin')
-    if not work: return links
-    images = work.find_all('img')
-    for img in images:
-        href = img.get('src')
-        if href:
-            links.append(href)
-    return links
+        token = (soup.find('form', class_='new_user')
+                    .find('input', attrs={'name': 'authenticity_token'})
+                    .get('value'))
+        return token
 
 
-def get_series_info(soup):
-    """Get series title and list of work urls."""
-
-    work_urls = get_work_urls(soup)
-
-    # create dictionary for series info
-    series_info = {'work_urls': work_urls}
-
-    # add series title to dictionary
-    series_info['title'] = get_title(soup)
-
-    return series_info
+    def get_image_links(self, soup: BeautifulSoup) -> list[str]:
+        links = []
+        work = soup.find('div', id='workskin')
+        if not work: return links
+        images = work.find_all('img')
+        for img in images:
+            href = img.get('src')
+            if href:
+                links.append(href)
+        return links
 
 
-def get_work_urls(soup):
-    """Get all links to ao3 works on a page"""
+    def get_series_info(self, soup: BeautifulSoup) -> dict:
+        """Get series title and list of work urls."""
 
-    # work urls can be identified by the prefix /works/ followed by only digits
-    pattern = r'\/works\/\d+$'
-    expression = re.compile(pattern)
+        work_urls = self.get_work_urls(soup)
 
-    work_urls = []
+        # create dictionary for series info
+        series_info = {'work_urls': work_urls}
 
-    # get links to all works on the page
-    all_links = soup.find_all('a')
-    for link in all_links:
-        href = link.get('href')
-        if href and expression.match(href):
-            url = strings.AO3_BASE_URL + href
-            work_urls.append(url)
+        # add series title to dictionary
+        series_info['title'] = self.get_title(soup)
 
-    return work_urls
+        return series_info
 
 
-def get_work_and_series_urls(soup):
-    """Get all links to ao3 works or series on a page"""
+    def get_work_urls(self, soup: BeautifulSoup) -> list[str]:
+        """Get all links to ao3 works on a page"""
 
-    # work urls can be identified by the prefix /works/ followed by only digits
-    workpattern = r'\/works\/\d+$'
-    workexpression = re.compile(workpattern)
+        # work urls can be identified by the prefix /works/ followed by only digits
+        pattern = r'\/works\/\d+$'
+        expression = re.compile(pattern)
 
-    # series urls can be identified in the same manner
-    seriespattern = r'\/series\/\d+$'
-    seriesexpression = re.compile(seriespattern)
+        work_urls = []
 
-    urls = []
+        # get links to all works on the page
+        all_links = soup.find_all('a')
+        for link in all_links:
+            href = link.get('href')
+            if href and expression.match(href):
+                url = strings.AO3_BASE_URL + href
+                work_urls.append(url)
 
-    # get links to all works on the page
-    all_links = soup.find_all('a')
-    for link in all_links:
-        href = link.get('href')
-        if href and (workexpression.match(href) or seriesexpression.match(href)):
-            url = strings.AO3_BASE_URL + href
-            urls.append(url)
-
-    return urls
+        return work_urls
 
 
-def get_proceed_link(soup):
-    """Get link to proceed through explict work agreement."""
+    def get_work_and_series_urls(self, soup: BeautifulSoup) -> list[str]:
+        """Get all links to ao3 works or series on a page"""
 
-    try:
-        link = (soup.find('div', class_='works-show region')
-                    .find('ul', class_='actions')
-                    .find('li')
-                    .find('a', text=strings.AO3_PROCEED)
-                    .get('href'))
-    except AttributeError as e:
-        raise ProceedException(strings.ERROR_PROCEED_LINK) from e
-    return strings.AO3_BASE_URL + link
+        # work urls can be identified by the prefix /works/ followed by only digits
+        workpattern = r'\/works\/\d+$'
+        workexpression = re.compile(workpattern)
 
+        # series urls can be identified in the same manner
+        seriespattern = r'\/series\/\d+$'
+        seriesexpression = re.compile(seriespattern)
 
-def get_download_link(soup, download_type):
-    """Get download link from ao3 work page."""
+        urls = []
 
-    try:
-        link = (soup.find('li', class_='download')
-                    .find('a', text=download_type)
-                    .get('href'))
-    except AttributeError as e:
-        raise DownloadException(strings.ERROR_DOWNLOAD_LINK) from e
-    return strings.AO3_BASE_URL + link
+        # get links to all works on the page
+        all_links = soup.find_all('a')
+        for link in all_links:
+            href = link.get('href')
+            if href and (workexpression.match(href) or seriesexpression.match(href)):
+                url = strings.AO3_BASE_URL + href
+                urls.append(url)
+
+        return urls
 
 
-def get_title(soup):
-    """Get title of ao3 work, stripping out extraneous information."""
+    def proceed(self, thesoup: BeautifulSoup) -> BeautifulSoup:
+        """Check locked/deleted and proceed through explicit agreement if needed"""
 
-    return (soup.title.get_text().strip()
-            .replace(strings.AO3_TITLE, '')
-            .replace(strings.AO3_CHAPTER_TITLE, ''))
-
-
-def get_current_chapters(soup):
-    text = (soup.find('dl', class_='stats')
-                .find('dd', class_='chapters')
-                .get_text().strip())
-
-    index = text.find('/')
-    if index == -1: return -1
-    
-    currentchap = ''
-    for c in reversed(text[:index]):
-        if c.isspace():
-            break
-        else:
-            currentchap += c
-    currentchap = currentchap[::-1]
-    return currentchap
+        if self.is_locked(thesoup):
+            raise exceptions.LockedException(strings.ERROR_LOCKED)
+        if self.is_deleted(thesoup):
+            raise exceptions.DeletedException(strings.ERROR_DELETED)
+        if self.is_explicit(thesoup):
+            proceed_url = soup.get_proceed_link(thesoup)
+            thesoup = repo.get_soup(proceed_url)
+        return thesoup
 
 
-def is_locked(soup):
-    return string_exists(soup, strings.AO3_LOCKED)
+    def get_proceed_link(self, soup: BeautifulSoup) -> str:
+        """Get link to proceed through explict work agreement."""
+
+        try:
+            link = (soup.find('div', class_='works-show region')
+                        .find('ul', class_='actions')
+                        .find('li')
+                        .find('a', text=strings.AO3_PROCEED)
+                        .get('href'))
+        except AttributeError as e:
+            raise exceptions.ProceedException(strings.ERROR_PROCEED_LINK) from e
+        return strings.AO3_BASE_URL + link
 
 
-def is_deleted(soup):
-    return string_exists(soup, strings.AO3_DELETED)
+    def get_download_link(self, soup: BeautifulSoup, download_type: str) -> str:
+        """Get download link from ao3 work page."""
+
+        try:
+            link = (soup.find('li', class_='download')
+                        .find('a', text=download_type)
+                        .get('href'))
+        except AttributeError as e:
+            raise exceptions.DownloadException(strings.ERROR_DOWNLOAD_LINK) from e
+        return strings.AO3_BASE_URL + link
 
 
-def is_explicit(soup):
-    return string_exists(soup, strings.AO3_EXPLICIT)
+    def get_title(self, soup: BeautifulSoup) -> str:
+        """Get title of ao3 work, stripping out extraneous information."""
+
+        return (soup.title.get_text().strip()
+                .replace(strings.AO3_TITLE, '')
+                .replace(strings.AO3_CHAPTER_TITLE, ''))
 
 
-def is_failed_login(soup):
-    return string_exists(soup, strings.AO3_FAILED_LOGIN)
+    def get_current_chapters(self, soup: BeautifulSoup) -> str:
+        text = (soup.find('dl', class_='stats')
+                    .find('dd', class_='chapters')
+                    .get_text().strip())
+
+        index = text.find('/')
+        if index == -1: return -1
+
+        return text.get_current_chapters(text, index)
+        
+
+    def is_locked(self, soup: BeautifulSoup) -> bool:
+        return self.string_exists(soup, strings.AO3_LOCKED)
 
 
-def string_exists(soup, string):
-    pattern = string
-    expression = re.compile(pattern)
-    match = soup.find_all(text=expression)
-    return len(match) > 0
+    def is_deleted(self, soup: BeautifulSoup) -> bool:
+        return self.string_exists(soup, strings.AO3_DELETED)
 
 
-def get_next_page(link):
-    index = str.find(link, 'page=')
-    if index == -1:
-        if str.find(link, '?') == -1:
-            newlink = link + '?page=2'
-        else:
-            newlink = link + '&page=2'
-        print('finished downloading page 1. getting page 2')
-    else:
-        i = index + 5
-        page = get_num_from_link(link, i)
-        nextpage = int(page) + 1
-        newlink = link.replace('page=' + page, 'page=' + str(nextpage))
-        print('finished downloading page ' + page + '. getting page ' + str(nextpage))
-    return newlink
+    def is_explicit(self, soup: BeautifulSoup) -> bool:
+        return self.string_exists(soup, strings.AO3_EXPLICIT)
 
 
-def get_page_number(link):
-    index = str.find(link, 'page=')
-    if index == -1:
-        return 1
-    else:
-        i = index + 5
-        page = get_num_from_link(link, i)
-        return int(page)
+    def is_failed_login(self, soup: BeautifulSoup) -> bool:
+        return self.string_exists(soup, strings.AO3_FAILED_LOGIN)
 
 
-def get_num_from_link(link, start):
-    end = start + 1
-    while end < len(link) and str.isdigit(link[start:end+1]):
-        end = end + 1
-    return link[start:end]
+    def string_exists(self, soup: BeautifulSoup, string: str) -> bool:
+        pattern = string
+        expression = re.compile(pattern)
+        match = soup.find_all(text=expression)
+        return len(match) > 0

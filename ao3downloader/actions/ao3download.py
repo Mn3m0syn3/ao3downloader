@@ -4,24 +4,25 @@ import traceback
 import requests
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 
 from ao3downloader.ao3 import Ao3
+from ao3downloader.fileio import FileOps
+from ao3downloader.repo import Repository
 
 
 def action():
-
-    filetypes = shared.get_download_types()
+    fileio = FileOps()
+    filetypes = shared.get_download_types(fileio)
+    session = requests.sessions.Session()
+    repo = Repository(session, 1)
 
     print(strings.AO3_PROMPT_SERIES)
     series = True if input() == strings.PROMPT_YES else False
-
-    logfile = shared.get_logfile()
     
     latest = None
     try:
-        with open(logfile, 'r', encoding='utf-8') as f:
+        with open(fileio.logfile, 'r', encoding='utf-8') as f:
             objects = map(lambda x: json.loads(x), f.readlines())
             starts = filter(lambda x: 'starting' in x, objects)
             bydate = sorted(starts, key=lambda x: datetime.datetime.strptime(x['timestamp'], '%m/%d/%Y, %H:%M:%S'), reverse=True)
@@ -29,7 +30,7 @@ def action():
     except FileNotFoundError:
         pass
     except Exception as e:
-        fileio.write_log(logfile, {'error': str(e), 'message': strings.ERROR_LOG_FILE, 'stacktrace': traceback.format_exc()})
+        fileio.write_log({'error': str(e), 'message': strings.ERROR_LOG_FILE, 'stacktrace': traceback.format_exc()})
 
     link = None
     if latest:
@@ -54,15 +55,12 @@ def action():
     print(strings.AO3_PROMPT_IMAGES)
     images = True if input() == strings.PROMPT_YES else False
 
-    session = requests.sessions.Session()
-
-    shared.ao3_login(session)
+    shared.ao3_login(repo)
 
     print(strings.AO3_INFO_DOWNLOADING)
 
-    fileio.write_log(logfile, {'starting': link})
-    fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
+    fileio.write_log({'starting': link})
 
-    Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, filetypes, images, series, pages).download(link)
+    Ao3(repo, fileio, filetypes, images, series, pages).download(link)
     
     session.close()

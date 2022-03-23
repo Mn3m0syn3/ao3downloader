@@ -3,20 +3,23 @@ import requests
 import traceback
 
 import ao3downloader.actions.shared as shared
-import ao3downloader.fileio as fileio
 import ao3downloader.strings as strings
 import ao3downloader.update as update
 
 from tqdm import tqdm
 
 from ao3downloader.ao3 import Ao3
+from ao3downloader.fileio import FileOps
+from ao3downloader.repo import Repository
 
 
 def action():
 
+    logfile = shared.get_logfile()
+    fileio = FileOps(strings.DOWNLOAD_FOLDER_NAME, logfile, strings.SETTINGS_FILE_NAME)
+
     folder = fileio.setting(
-        strings.UPDATE_PROMPT_INPUT, 
-        strings.SETTINGS_FILE_NAME, 
+        strings.UPDATE_PROMPT_INPUT,
         strings.SETTING_UPDATE_FOLDER)
 
     update_filetypes = shared.get_update_types()
@@ -26,7 +29,8 @@ def action():
     images = True if input() == strings.PROMPT_YES else False
 
     session = requests.sessions.Session()
-    shared.ao3_login(session)    
+    repo = Repository(session, 1)
+    shared.ao3_login(repo)
 
     print(strings.UPDATE_INFO_FILES)
 
@@ -36,17 +40,15 @@ def action():
 
     print(strings.UPDATE_INFO_URLS)
 
-    logfile = shared.get_logfile()
-
     works = []
     for fic in tqdm(fics):
         try:
             work = update.process_file(fic['path'], fic['filetype'])
             if work:
                 works.append(work)
-                fileio.write_log(logfile, {'message': strings.MESSAGE_INCOMPLETE_FIC, 'path': fic['path'], 'link': work['link']})
+                fileio.write_log({'message': strings.MESSAGE_INCOMPLETE_FIC, 'path': fic['path'], 'link': work['link']})
         except Exception as e:
-            fileio.write_log(logfile, {'message': strings.ERROR_INCOMPLETE_FIC, 'path': fic['path'], 'error': str(e), 'stacktrace': traceback.format_exc()})    
+            fileio.write_log({'message': strings.ERROR_INCOMPLETE_FIC, 'path': fic['path'], 'error': str(e), 'stacktrace': traceback.format_exc()})    
 
     # remove duplicate work links. take lowest number of chapters.
     works_cleaned = []
@@ -59,9 +61,7 @@ def action():
 
     print(strings.UPDATE_INFO_DOWNLOADING)
 
-    fileio.make_dir(strings.DOWNLOAD_FOLDER_NAME)
-
-    ao3 = Ao3(session, logfile, strings.DOWNLOAD_FOLDER_NAME, download_filetypes, images, False, None)
+    ao3 = Ao3(repo, fileio, download_filetypes, images, False, None)
 
     for work in tqdm(works_cleaned):
         ao3.update(work['link'], work['chapters'])

@@ -207,31 +207,3 @@ def get_series_pdf(pdf: pdfquery.PDFQuery) -> list[str]:
     links = map(lambda x: x.attrib['URI'] if 'URI' in x.attrib else '', pdf.pq('Annot'))
     series = filter(lambda x: 'archiveofourown.org/series/' in x, links)
     return list(series)
-
-
-def get_total_chapters(text: str, index: int) -> str:
-    '''read characters after index until encountering a space.'''
-    totalchap = ''
-    for c in text[index+1:]:
-        if c.isspace():
-            break
-        else:
-            totalchap += c
-    return totalchap
-
-
-def get_current_chapters(text: str, index: int) -> str:
-    ''' 
-    reverse text before index, then read characters from beginning of reversed text 
-    until encountering a space, then un-reverse the value you got. 
-    we assume here that the text does not include unicode values.
-    this should be safe because ao3 doesn't have localization... I think.
-    '''
-    currentchap = ''
-    for c in reversed(text[:index]):
-        if c.isspace():
-            break
-        else:
-            currentchap += c
-    currentchap = currentchap[::-1]
-    return currentchap
