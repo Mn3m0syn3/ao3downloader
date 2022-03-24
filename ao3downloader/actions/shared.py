@@ -1,12 +1,11 @@
 import os
-import requests
 
 import ao3downloader.exceptions as exceptions
 import ao3downloader.strings as strings
 
 from ao3downloader.fileio import FileOps
 from ao3downloader.repo import Repository
-from ao3downloader.actions.settings import Settings
+from ao3downloader.settings import Settings
 
 
 def get_folder(prompt: str) -> str:

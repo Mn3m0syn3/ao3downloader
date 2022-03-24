@@ -16,6 +16,10 @@ SETTING_API_TOKEN = 'api_token'
 SETTING_UPDATE_FOLDER = 'update_folder'
 SETTING_UPDATE_FILETYPES = 'update_filetypes'
 SETTING_SLEEP_TIME = 'sleep_time'
+SETTING_SAVE_SECRETS = 'save_secrets'
+
+DEFAULT_SLEEP_TIME = 1
+DEFAULT_SAVE_SECRETS = False
 
 # endregion
 
@@ -26,6 +30,8 @@ PROMPT_NO = 'n'
 
 PROMPT_OPTIONS = 'options'
 PROMPT_INVALID_ACTION = 'please choose a valid action'
+PROMPT_SLEEP_TIME = 'how long do you want to wait between requests to ao3? (value is in seconds. minimum value is 1. decimals are allowed. increasing this value can reduce the frequency of timeouts)'
+PROMPT_SAVE_SECRETS = 'do you want to save sensitive data in the settings file? ({}/{})'.format(PROMPT_YES, PROMPT_NO)
 
 # for action description changes be sure to update readme
 ACTION_DESCRIPTION_DISPLAY_MENU = 'display menu'
@@ -82,8 +88,6 @@ REDOWNLOAD_PROMPT_FILE_TYPE = 'please enter file type you want to convert from. 
 REDOWNLOAD_INFO_FILE_TYPE = 'added {} to list of file types to convert from'
 REDOWNLOAD_INFO_URLS = 'getting work urls'
 REDOWNLOAD_INFO_DONE = 'done getting work urls. {} urls found'
-
-PROMPT_SLEEP_TIME = 'how long do you want to wait between requests to ao3? (value is in seconds. minimum value is 1. decimals are allowed. increasing this value can reduce the frequency of timeouts)'
 
 INFO_NO_LOG_FILE = 'no log file'
 INFO_NO_FOLDER = 'folder does not exist'

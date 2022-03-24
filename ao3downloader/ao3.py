@@ -1,15 +1,12 @@
 """Download works from ao3."""
 
 import os
-import requests
 import traceback
 
 import ao3downloader.exceptions as exceptions
 import ao3downloader.soup as soup
 import ao3downloader.strings as strings
 import ao3downloader.text as text
-
-from bs4 import BeautifulSoup
 
 from ao3downloader.fileio import FileOps
 from ao3downloader.repo import Repository
@@ -68,7 +65,8 @@ class Ao3:
         elif '/series/' in link:
             if self.series:
                 series_soup = self.repo.get_soup(link)
-                series_soup = self.soup.proceed(series_soup)
+                proceed_link = self.soup.proceed(series_soup)
+                series_soup = self.repo.get_soup(proceed_link)
                 work_urls = self.soup.get_work_urls(series_soup)
                 for work_url in work_urls:
                     if work_url not in links_list:
@@ -108,7 +106,7 @@ class Ao3:
                     self.download_recursive(url)
                 link = soup.get_next_page(link)
                 if self.pages and soup.get_page_number(link) == self.pages + 1: break
-                fileio.write_log({'starting': link})
+                self.fileio.write_log({'starting': link})
         else:
             raise exceptions.InvalidLinkException(strings.ERROR_INVALID_LINK)
 
@@ -118,7 +116,8 @@ class Ao3:
 
         try:
             series_soup = self.repo.get_soup(link)
-            series_soup = self.soup.proceed(series_soup)
+            proceed_link = self.soup.proceed(series_soup)
+            series_soup = self.repo.get_soup(proceed_link)
             series_info = self.soup.get_series_info(series_soup)
             series_title = series_info['title']
             self.log['series'] = series_title

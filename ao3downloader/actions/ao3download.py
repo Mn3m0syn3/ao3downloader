@@ -9,13 +9,16 @@ import ao3downloader.strings as strings
 from ao3downloader.ao3 import Ao3
 from ao3downloader.fileio import FileOps
 from ao3downloader.repo import Repository
+from ao3downloader.settings import Settings
+from ao3downloader.soup import Soup
 
 
 def action():
     fileio = FileOps()
-    filetypes = shared.get_download_types(fileio)
-    session = requests.sessions.Session()
-    repo = Repository(session, 1)
+    settings = Settings(fileio)
+    repo = Repository(requests.sessions.Session(), settings.sleep_time())
+
+    filetypes = settings.download_types()
 
     print(strings.AO3_PROMPT_SERIES)
     series = True if input() == strings.PROMPT_YES else False
@@ -62,5 +65,3 @@ def action():
     fileio.write_log({'starting': link})
 
     Ao3(repo, fileio, filetypes, images, series, pages).download(link)
-    
-    session.close()

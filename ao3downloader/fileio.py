@@ -5,12 +5,13 @@ import json
 import os
 
 import ao3downloader.strings as strings
+import ao3downloader.text as text
 
 
 class FileOps:
     def __init__(self):
         self.folder = strings.DOWNLOAD_FOLDER_NAME
-        if not os.path.exists(folder): os.mkdir(folder)
+        if not os.path.exists(self.folder): os.mkdir(self.folder)
         if not os.path.exists(strings.LOG_FOLDER_NAME): os.mkdir(strings.LOG_FOLDER_NAME)
         self.logfile = os.path.join(strings.LOG_FOLDER_NAME, strings.LOG_FILE_NAME)
         self.settingsfile = strings.SETTINGS_FILE_NAME
@@ -84,7 +85,7 @@ class FileOps:
 
     def file_exists(self, id: str, titles: dict[str, str], filetypes: list[str]) -> bool:
         if id not in titles: return False
-        filename = get_valid_filename(titles[id])
+        filename = text.get_valid_filename(titles[id])
         files = list(map(lambda x: os.path.join(self.folder, filename + '.' + x.lower()), filetypes))
         for file in files:
             if not os.path.exists(file):

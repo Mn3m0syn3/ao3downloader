@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 import ao3downloader.exceptions as exceptions
 import ao3downloader.strings as strings
-import ao3downloader.text as text
+import ao3downloader.text as textparse
 
 
 class Soup:
@@ -90,7 +90,7 @@ class Soup:
         return urls
 
 
-    def proceed(self, thesoup: BeautifulSoup) -> BeautifulSoup:
+    def proceed(self, thesoup: BeautifulSoup) -> str:
         """Check locked/deleted and proceed through explicit agreement if needed"""
 
         if self.is_locked(thesoup):
@@ -98,9 +98,8 @@ class Soup:
         if self.is_deleted(thesoup):
             raise exceptions.DeletedException(strings.ERROR_DELETED)
         if self.is_explicit(thesoup):
-            proceed_url = soup.get_proceed_link(thesoup)
-            thesoup = repo.get_soup(proceed_url)
-        return thesoup
+            proceed_url = self.get_proceed_link(thesoup)
+        return proceed_url
 
 
     def get_proceed_link(self, soup: BeautifulSoup) -> str:
@@ -145,7 +144,7 @@ class Soup:
         index = text.find('/')
         if index == -1: return -1
 
-        return text.get_current_chapters(text, index)
+        return textparse.get_current_chapters(text, index)
         
 
     def is_locked(self, soup: BeautifulSoup) -> bool:
