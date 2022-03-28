@@ -8,11 +8,14 @@ import ao3downloader.strings as strings
 from ao3downloader.ao3 import Ao3
 from ao3downloader.fileio import FileOps
 from ao3downloader.repo import Repository
+from ao3downloader.settings import Settings
+from ao3downloader.soup import Soup
 
 def action():
+    soup = Soup()
     fileio = FileOps()
-    session = requests.sessions.Session()
-    repo = Repository(session, 1)
+    settings = Settings(fileio)
+    repository = Repository(settings.sleep_time())
 
     print(strings.AO3_PROMPT_LINK)
     link = input()
@@ -32,7 +35,7 @@ def action():
 
     shared.ao3_login(repo)
     
-    links = Ao3(repo, fileio, None, False, series, pages).get_work_links(link)
+    links = Ao3(repository, fileio, soup, None, False, series, pages).get_work_links(link)
 
     filename = f'links_{datetime.datetime.now().strftime("%m%d%Y%H%M%S")}.txt'
 

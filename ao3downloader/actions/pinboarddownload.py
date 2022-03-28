@@ -12,12 +12,15 @@ from ao3downloader.ao3 import Ao3
 from ao3downloader.fileio import FileOps
 from ao3downloader.pinboard import Pinboard
 from ao3downloader.repo import Repository
+from ao3downloader.settings import Settings
 
 
 def action():
     fileio = FileOps()
-    repo = Repository(1)
-    filetypes = shared.get_download_types(fileio)
+    settings = Settings(fileio)
+    repository = Repository(settings)
+
+    filetypes = settings.download_types()
 
     print(strings.PINBOARD_PROMPT_DATE)
     getdate = True if input() == strings.PROMPT_YES else False
@@ -39,7 +42,7 @@ def action():
         strings.PINBOARD_PROMPT_API_TOKEN, 
         strings.SETTING_API_TOKEN)
 
-    shared.ao3_login(repo)
+    shared.ao3_login(repository)
     
     print(strings.PINBOARD_INFO_GETTING_BOOKMARKS)
     bookmarks = Pinboard(repo, api_token).get_bookmarks(date, exclude_toread)
@@ -57,9 +60,9 @@ def action():
 
     print(strings.AO3_INFO_DOWNLOADING)
 
-    ao3 = Ao3(repo, fileio, filetypes, images, True, None)
+    ao3 = Ao3(repository, fileio, filetypes, images, True, None)
 
     for item in tqdm(bookmarks):
         ao3.download(item['href'])
     
-    session.close()
+    repository.session.close()

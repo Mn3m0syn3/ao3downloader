@@ -8,17 +8,6 @@ from ao3downloader.repo import Repository
 from ao3downloader.settings import Settings
 
 
-def get_folder(prompt: str) -> str:
-    while True:
-        print(prompt)
-        folder = input()
-        if os.path.exists(folder): 
-            break
-        else:
-            print(strings.INFO_NO_FOLDER)
-    return folder
-
-
 def ao3_login(repo: Repository, fileio: FileOps, settings: Settings) -> None:
 
     print(strings.AO3_PROMPT_LOGIN)
@@ -34,6 +23,7 @@ def ao3_login(repo: Repository, fileio: FileOps, settings: Settings) -> None:
             fileio.save_setting(strings.SETTING_USERNAME, None)
             fileio.save_setting(strings.SETTING_PASSWORD, None)
             raise
+
 
 def get_files_of_type(folder: str, filetypes: list[str]) -> list[dict[str, str]]:
     results = []

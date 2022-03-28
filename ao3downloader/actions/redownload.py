@@ -13,7 +13,8 @@ from ao3downloader.repo import Repository
 
 def action():
     
-    folder = shared.get_folder(strings.REDOWNLOAD_PROMPT_FOLDER)
+    print(strings.REDOWNLOAD_PROMPT_FOLDER)
+    folder = input()
 
     oldtypes = []
     while True:

@@ -4,7 +4,6 @@ import os
 import traceback
 
 import ao3downloader.exceptions as exceptions
-import ao3downloader.soup as soup
 import ao3downloader.strings as strings
 import ao3downloader.text as text
 
@@ -18,6 +17,7 @@ class Ao3:
         self.repo = repo
         self.fileio = fileio
         self.soup = soup
+        
         self.filetypes = filetypes
         self.images = images
         self.series = series

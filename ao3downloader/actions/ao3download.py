@@ -7,16 +7,17 @@ import ao3downloader.actions.shared as shared
 import ao3downloader.strings as strings
 
 from ao3downloader.ao3 import Ao3
-from ao3downloader.fileio import FileOps
-from ao3downloader.repo import Repository
-from ao3downloader.settings import Settings
-from ao3downloader.soup import Soup
+from ao3downloader import FileOps
+from ao3downloader import Repository
+from ao3downloader import Settings
+from ao3downloader import Soup
 
 
 def action():
+    soup = Soup()
     fileio = FileOps()
     settings = Settings(fileio)
-    repo = Repository(requests.sessions.Session(), settings.sleep_time())
+    repository = Repository(settings)
 
     filetypes = settings.download_types()
 
@@ -64,4 +65,4 @@ def action():
 
     fileio.write_log({'starting': link})
 
-    Ao3(repo, fileio, filetypes, images, series, pages).download(link)
+    Ao3(repository, fileio, filetypes, images, series, pages).download(link)
