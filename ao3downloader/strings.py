@@ -92,6 +92,7 @@ REDOWNLOAD_INFO_DONE = 'done getting work urls. {} urls found'
 INFO_NO_LOG_FILE = 'no log file'
 INFO_NO_FOLDER = 'folder does not exist'
 INFO_EXCLUDING_WORKS = 'filtering out works that are already in the downloads folder'
+INFO_FINISHED_PAGE = 'finished getting page {}. starting page {}'
 
 MESSAGE_TOO_MANY_REQUESTS = 'too many requests to server. resuming in 5 minutes. paused at: {}'
 MESSAGE_RESUMING = 'resuming execution'
@@ -113,6 +114,10 @@ AO3_PROCEED = 'Proceed'
 
 AO3_TITLE = '[Archive of Our Own]'
 AO3_CHAPTER_TITLE = 'Chapter 1 - '
+
+AO3_IDENTIFIER = 'archiveofourown.org'
+AO3_IDENTIFIER_WORK = 'archiveofourown.org/works/'
+AO3_IDENTIFIER_SERIES = 'archiveofourown.org/series/'
 
 # endregion
 

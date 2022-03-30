@@ -1,41 +1,33 @@
 import ao3downloader.strings as strings
-
-from ao3downloader.actions import ao3download
-from ao3downloader.actions import pinboarddownload
-from ao3downloader.actions import updatefics
-from ao3downloader.actions import redownload
-from ao3downloader.actions import logvisualization
-from ao3downloader.actions import updateseries
-from ao3downloader.actions import getlinks
-
+from ao3downloader import Actions
 
 def ao3_download_action():
-    ao3download.action()
-
+    with Actions() as a:
+        a.action_ao3()
 
 def links_only_action():
-    getlinks.action()
-
+    with Actions() as a:
+        a.action_getlinks()
 
 def update_epubs_action():
-    updatefics.action()
-
+    with Actions() as a:
+        a.action_update()
 
 def update_series_action():
-    updateseries.action()
+    with Actions() as a:
+        a.action_updateseries
     
-
 def re_download_action():
-    redownload.action()
-
+    with Actions() as a:
+        a.action_redownload()
 
 def pinboard_download_action():
-    pinboarddownload.action()
-
+    with Actions() as a:
+        a.action_pinboard()
 
 def log_visualization_action():
-    logvisualization.action()
-
+    with Actions() as a:
+        a.action_logvisualization()
 
 def display_menu():
     print(strings.PROMPT_OPTIONS)
@@ -46,7 +38,6 @@ def display_menu():
             desc = value.__name__
         print(' {}: {}'.format(key, desc))
 
-
 def choose(choice):
     try:
         function = actions[choice]
@@ -56,7 +47,6 @@ def choose(choice):
             print(str(e))
     except KeyError as e:
         print(strings.PROMPT_INVALID_ACTION)
-
 
 display_menu.description = strings.ACTION_DESCRIPTION_DISPLAY_MENU
 ao3_download_action.description = strings.ACTION_DESCRIPTION_AO3
