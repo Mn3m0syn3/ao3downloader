@@ -607,8 +607,8 @@ class Repository:
 
 class Ao3Base:
     def __init__(self, fileops: FileOps, textparse: TextParse, soup: SoupParse, repo: Repository):
-        self.fileops = fileops
         self.textparse = textparse
+        self.fileops = fileops
         self.soup = soup
         self.repo = repo
 
@@ -657,11 +657,10 @@ class Ao3:
             if self.series:
                 series_soup = self.base.repo.get_soup(link)
                 proceed_link = self.base.soup.proceed(series_soup)
-                series_soup = self.base.repo.get_soup(proceed_link)
+                if proceed_link: series_soup = self.base.repo.get_soup(proceed_link)
                 work_urls = self.base.soup.get_work_urls(series_soup)
                 for work_url in work_urls:
-                    if work_url not in links_list:
-                        links_list.append(work_url)
+                    self.get_work_links_recursive(work_url, links_list)
         elif strings.AO3_IDENTIFIER in link:
             while True:
                 thesoup = self.base.repo.get_soup(link)
@@ -699,7 +698,7 @@ class Ao3:
                 if self.pages and pagenum == self.pages + 1: 
                     break
                 else:
-                    self.fileio.write_log({'starting': link})
+                    self.fileops.write_log({'starting': link})
                     print(strings.INFO_FINISHED_PAGE.format(str(pagenum - 1), str(pagenum)))
         else:
             raise InvalidLinkException(strings.ERROR_INVALID_LINK)
@@ -729,7 +728,7 @@ class Ao3:
             thesoup = self.base.repo.get_soup(proceed_link)
 
             title = self.base.soup.get_title(thesoup)
-            filename = self.base.fileio.get_valid_filename(title)
+            filename = self.base.fileops.get_valid_filename(title)
             self.log['title'] = title
 
             if chapters is not None:
@@ -745,14 +744,14 @@ class Ao3:
             if self.images:
                 imagelog = {'link': link, 'title': title}
                 imagelinks = self.soup.get_image_links(thesoup)
-                self.base.fileio.make_dir(strings.IMAGE_FOLDER_NAME)
+                self.base.fileops.make_dir(strings.IMAGE_FOLDER_NAME)
                 self.save_images(imagelinks, filename, imagelog)
 
         except Exception as e:
             self.log_error(e)
         else:
             self.log['success'] = True
-            self.fileio.write_log(self.log)
+            self.fileops.write_log(self.log)
 
     def save_images(self, imagelinks, filename, imagelog):
         counter = 0
@@ -764,20 +763,20 @@ class Ao3:
                 if '?' in ext: ext = ext[:ext.index('?')]
                 response = self.base.repo.get_book(img)
                 imagefile = filename + ' img' + str(counter).zfill(3) + ext
-                self.base.fileio.save_bytes(os.path.join(strings.IMAGE_FOLDER_NAME, imagefile), response)
+                self.base.fileops.save_bytes(os.path.join(strings.IMAGE_FOLDER_NAME, imagefile), response)
                 counter += 1
             except Exception as e:
                 imagelog['error'] = str(e)
                 imagelog['message'] = strings.ERROR_IMAGE
                 imagelog['stacktrace'] = traceback.format_exc()
-                self.base.fileio.write_log(imagelog)
+                self.base.fileops.write_log(imagelog)
 
     def log_error(self, exception: Exception):
         self.log['error'] = str(exception)
         self.log['success'] = False
         if not isinstance(exception, Ao3DownloaderException):
             self.log['stacktrace'] = ''.join(traceback.TracebackException.from_exception(exception).format())
-        self.base.fileio.write_log(self.log)
+        self.base.fileops.write_log(self.log)
 
 class Pinboard:
     POSTS_FROM_DATE_URL = 'https://api.pinboard.in/v1/posts/all?auth_token={}&fromdt={}'
