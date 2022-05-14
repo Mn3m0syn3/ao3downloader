@@ -1,10 +1,9 @@
 venv/
-.vscode/
 __pycache__/
 .pytest_cache/
 *.pyc
 downloads/
 logs/
-settings.json
+/settings.json
 .coverage
 cov.xml
